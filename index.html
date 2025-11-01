@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal File Generator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for aesthetic feel */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #4f46e5;
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        /* Ensure the body is full height for centering */
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#4f46e5', /* Indigo-600 */
+                        'primary-dark': '#3730a3', /* Indigo-800 */
+                        'background': '#111827', /* Gray-900 */
+                        'card': '#1f2937', /* Gray-800 */
+                        'text-light': '#f3f4f6', /* Gray-100 */
+                        'text-muted': '#9ca3af', /* Gray-400 */
+                    }
+                }
+            }
+        }
+
+        // --- Core JavaScript Logic ---
+
+        // Function to create and trigger the download
+        function downloadFile() {
+            const content = document.getElementById('content-area').value;
+            let filename = document.getElementById('filename-input').value.trim();
+            const extension = document.getElementById('extension-select').value;
+            
+            // Validation
+            if (!content) {
+                showMessage("Please paste the content you wish to save.", 'error');
+                return;
+            }
+            if (!filename) {
+                filename = 'untitled'; // Default filename
+            }
+
+            // Construct the full file name
+            const fullFilename = filename + extension;
+
+            // Create a Blob from the content
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+
+            // Create a temporary anchor element
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fullFilename;
+
+            // Programmatically click the anchor to trigger the download
+            document.body.appendChild(a);
+            a.click();
+
+            // Clean up
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+
+            showMessage(`Successfully created and downloaded: ${fullFilename}`, 'success');
+        }
+
+        // Custom message box function (instead of alert)
+        function showMessage(message, type) {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = message;
+            
+            // Clear previous classes and set new ones
+            messageBox.classList.remove('hidden', 'bg-red-500', 'bg-green-600');
+            
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-500');
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-600');
+            }
+
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Attach event listener after the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const downloadButton = document.getElementById('download-button');
+            if (downloadButton) {
+                downloadButton.addEventListener('click', downloadFile);
+            }
+        });
+
+    </script>
+</head>
+<body class="bg-background text-text-light flex items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl space-y-6">
+        
+        <!-- Header -->
+        <header class="text-center space-y-2">
+            <h1 class="text-4xl font-extrabold text-primary">Universal File Generator</h1>
+            <p class="text-text-muted">Paste your content below and choose the desired file name and format for download.</p>
+        </header>
+
+        <!-- Content Input Area -->
+        <div class="shadow-2xl rounded-xl overflow-hidden">
+            <textarea 
+                id="content-area" 
+                rows="15" 
+                placeholder="Paste your code, document text, or configuration here..." 
+                class="w-full p-4 bg-card border border-gray-700 text-text-light focus:ring-primary focus:border-primary rounded-xl focus:outline-none transition duration-150 ease-in-out text-sm resize-none"
+            ></textarea>
+        </div>
+
+        <!-- Controls (Filename and Extension) -->
+        <div class="flex flex-col sm:flex-row gap-4">
+            
+            <!-- Filename Input -->
+            <div class="flex-1">
+                <label for="filename-input" class="block text-sm font-medium text-text-muted mb-1">File Name (e.g., app, resume, config)</label>
+                <input 
+                    type="text" 
+                    id="filename-input" 
+                    placeholder="e.g., my_project"
+                    value="untitled"
+                    class="w-full p-3 bg-card border border-gray-700 text-text-light focus:ring-primary focus:border-primary rounded-lg focus:outline-none transition duration-150 ease-in-out text-sm"
+                >
+            </div>
+
+            <!-- Extension Dropdown -->
+            <div class="flex-1">
+                <label for="extension-select" class="block text-sm font-medium text-text-muted mb-1">File Extension</label>
+                <select id="extension-select" class="w-full p-3 bg-card border border-gray-700 text-text-light focus:ring-primary focus:border-primary rounded-lg focus:outline-none transition duration-150 ease-in-out text-sm appearance-none cursor-pointer">
+                    
+                    <optgroup label="Code & Script Files">
+                        <option value=".py">.py (Python)</option>
+                        <option value=".js">.js (JavaScript)</option>
+                        <option value=".html">.html (HTML)</option>
+                        <option value=".css">.css (CSS)</option>
+                        <option value=".jsx">.jsx (React JSX)</option>
+                        <option value=".php">.php</option>
+                        <option value=".java">.java</option>
+                        <option value=".c">.c</option>
+                        <option value=".cpp">.cpp</option>
+                        <option value=".cs">.cs</option>
+                        <option value=".swift">.swift</option>
+                        <option value=".go">.go</option>
+                        <option value=".rb">.rb (Ruby)</option>
+                        <option value=".pl">.pl (Perl)</option>
+                        <option value=".sql">.sql</option>
+                        <option value=".json">.json</option>
+                        <option value=".xml">.xml</option>
+                        <option value=".yml">.yml (YAML)</option>
+                        <option value=".yaml">.yaml</option>
+                    </optgroup>
+                    
+                    <optgroup label="Document Files">
+                        <option value=".txt">.txt (Plain Text)</option>
+                        <option value=".md">.md (Markdown)</option>
+                        <option value=".doc">.doc</option>
+                        <option value=".docx">.docx</option>
+                        <option value=".pdf">.pdf</option>
+                        <option value=".odt">.odt</option>
+                        <option value=".rtf">.rtf</option>
+                        <option value=".tex">.tex (LaTeX)</option>
+                        <option value=".log">.log</option>
+                    </optgroup>
+
+                    <optgroup label="Configuration Files">
+                        <option value=".conf">.conf</option>
+                        <option value=".cfg">.cfg</option>
+                        <option value=".config">.config</option>
+                        <option value=".ini">.ini</option>
+                        <option value=".env">.env</option>
+                    </optgroup>
+                    
+                    <optgroup label="Spreadsheet Files">
+                        <option value=".csv">.csv (Comma Separated)</option>
+                        <option value=".xls">.xls</option>
+                        <option value=".xlsx">.xlsx</option>
+                        <option value=".ods">.ods</option>
+                        <option value=".tsv">.tsv</option>
+                    </optgroup>
+                    
+                    <optgroup label="Image Files">
+                        <option value=".png">.png</option>
+                        <option value=".jpg">.jpg</option>
+                        <option value=".jpeg">.jpeg</option>
+                        <option value=".gif">.gif</option>
+                        <option value=".svg">.svg</option>
+                        <option value=".webp">.webp</option>
+                        <option value=".ai">.ai</option>
+                        <option value=".psd">.psd</option>
+                    </optgroup>
+
+                    <optgroup label="Archive & Compressed Files">
+                        <option value=".zip">.zip</option>
+                        <option value=".rar">.rar</option>
+                        <option value=".7z">.7z</option>
+                        <option value=".tar">.tar</option>
+                        <option value=".gz">.gz</option>
+                        <option value=".bz2">.bz2</option>
+                    </optgroup>
+
+                    <optgroup label="Executable & System Files">
+                        <option value=".exe">.exe</option>
+                        <option value=".app">.app</option>
+                        <option value=".bat">.bat</option>
+                        <option value=".sh">.sh (Shell Script)</option>
+                        <option value=".dmg">.dmg</option>
+                        <option value=".dll">.dll</option>
+                    </optgroup>
+                    
+                    <!-- Less common categories grouped for brevity -->
+                    <optgroup label="Other Categories">
+                        <option value=".mp3">.mp3 (Audio)</option>
+                        <option value=".mp4">.mp4 (Video)</option>
+                        <option value=".ttf">.ttf (Font)</option>
+                        <option value=".db">.db (Database)</option>
+                        <option value=".stl">.stl (3D Model)</option>
+                        <option value=".epub">.epub (E-book)</option>
+                        <option value=".vdi">.vdi (VM)</option>
+                        <option value=".ppt">.ppt (Presentation)</option>
+                        <option value=".key">.key (Presentation)</option>
+                    </optgroup>
+
+                </select>
+            </div>
+        </div>
+
+        <!-- Download Button -->
+        <button 
+            id="download-button" 
+            class="w-full py-4 px-6 bg-primary hover:bg-primary-dark text-text-light text-lg font-bold rounded-lg shadow-lg transform hover:scale-[1.01] transition duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-primary focus:ring-opacity-50"
+        >
+            Download File
+        </button>
+
+        <!-- Message Box (Custom Alert) -->
+        <div id="message-box" class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 text-white font-semibold rounded-lg shadow-xl transition-opacity duration-300">
+            <!-- Messages appear here -->
+        </div>
+
+    </div>
+</body>
+</html>
+
