@@ -12,13 +12,13 @@
             width: 8px;
         }
         textarea::-webkit-scrollbar-thumb {
-            background-color: #4f46e5;
+            background-color: #10B981; /* Emerald Green */
             border-radius: 4px;
         }
         textarea::-webkit-scrollbar-track {
-            background: #1f2937;
+            background: #1E3A34; /* Deep Forest Green */
         }
-        /* Ensure the body is full height for centering */
+        /* Ensure the body is full height for centering and proper absolute positioning */
         html, body {
             height: 100%;
             margin: 0;
@@ -26,16 +26,17 @@
         }
     </style>
     <script>
+        // Define the custom color palette
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'primary': '#4f46e5', /* Indigo-600 */
-                        'primary-dark': '#3730a3', /* Indigo-800 */
-                        'background': '#111827', /* Gray-900 */
-                        'card': '#1f2937', /* Gray-800 */
-                        'text-light': '#f3f4f6', /* Gray-100 */
-                        'text-muted': '#9ca3af', /* Gray-400 */
+                        'bg-dark': '#0F172A', /* Dark Slate/Blue-Greenish */
+                        'card-dark': '#1E3A34', /* Deep Forest Green */
+                        'accent-green': '#10B981', /* Emerald Green (Primary Action) */
+                        'accent-orange': '#F97316', /* Deep Orange (Highlight) */
+                        'text-primary': '#F3F4F6', /* White/Off-white */
+                        'text-muted': '#9CA3AF', /* Gray 400 */
                     }
                 }
             }
@@ -86,17 +87,20 @@
             messageBox.textContent = message;
             
             // Clear previous classes and set new ones
-            messageBox.classList.remove('hidden', 'bg-red-500', 'bg-green-600');
+            messageBox.classList.remove('hidden', 'bg-red-600', 'bg-accent-green', 'opacity-0');
             
             if (type === 'error') {
-                messageBox.classList.add('bg-red-500');
+                messageBox.classList.add('bg-red-600');
             } else if (type === 'success') {
-                messageBox.classList.add('bg-green-600');
+                messageBox.classList.add('bg-accent-green');
             }
 
+            // Show for 5 seconds
             setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000);
+                messageBox.classList.add('opacity-0');
+                // Hide completely after fade out
+                setTimeout(() => messageBox.classList.add('hidden'), 500); 
+            }, 4500);
         }
 
         // Attach event listener after the DOM is loaded
@@ -109,23 +113,35 @@
 
     </script>
 </head>
-<body class="bg-background text-text-light flex items-center justify-center p-4">
+<body class="bg-bg-dark text-text-primary flex items-center justify-center p-4 relative">
 
-    <div class="w-full max-w-4xl space-y-6">
+    <!-- Dark Green Back Button -->
+    <a href="https://hencheng2.github.io/all/" 
+       title="Back to Index"
+       class="absolute top-4 left-4 p-3 bg-card-dark hover:bg-gray-700 text-text-primary rounded-full shadow-2xl transition duration-300 ease-in-out z-10 border border-accent-green/30">
+        <!-- SVG Arrow Icon for a cleaner look -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+    </a>
+
+    <div class="w-full max-w-4xl space-y-6 mt-16 sm:mt-0">
         
         <!-- Header -->
-        <header class="text-center space-y-2">
-            <h1 class="text-4xl font-extrabold text-primary">Universal File Generator</h1>
-            <p class="text-text-muted">Paste your content below and choose the desired file name and format for download.</p>
+        <header class="text-center space-y-2 mb-8">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-accent-orange drop-shadow-lg">
+                File Creator
+            </h1>
+            <p class="text-text-muted text-lg">Paste content, name the file, and download it in your chosen format.</p>
         </header>
 
         <!-- Content Input Area -->
-        <div class="shadow-2xl rounded-xl overflow-hidden">
+        <div class="shadow-2xl rounded-xl overflow-hidden border border-card-dark">
             <textarea 
                 id="content-area" 
                 rows="15" 
                 placeholder="Paste your code, document text, or configuration here..." 
-                class="w-full p-4 bg-card border border-gray-700 text-text-light focus:ring-primary focus:border-primary rounded-xl focus:outline-none transition duration-150 ease-in-out text-sm resize-none"
+                class="w-full p-6 bg-card-dark border-0 text-text-primary focus:ring-accent-green focus:border-accent-green rounded-xl focus:outline-none transition duration-150 ease-in-out text-sm resize-none"
             ></textarea>
         </div>
 
@@ -134,111 +150,65 @@
             
             <!-- Filename Input -->
             <div class="flex-1">
-                <label for="filename-input" class="block text-sm font-medium text-text-muted mb-1">File Name (e.g., app, resume, config)</label>
+                <label for="filename-input" class="block text-sm font-medium text-text-muted mb-1">File Name</label>
                 <input 
                     type="text" 
                     id="filename-input" 
                     placeholder="e.g., my_project"
                     value="untitled"
-                    class="w-full p-3 bg-card border border-gray-700 text-text-light focus:ring-primary focus:border-primary rounded-lg focus:outline-none transition duration-150 ease-in-out text-sm"
+                    class="w-full p-4 bg-card-dark border border-gray-700 text-text-primary focus:ring-accent-orange focus:border-accent-orange rounded-lg focus:outline-none transition duration-150 ease-in-out text-base"
                 >
             </div>
 
             <!-- Extension Dropdown -->
             <div class="flex-1">
                 <label for="extension-select" class="block text-sm font-medium text-text-muted mb-1">File Extension</label>
-                <select id="extension-select" class="w-full p-3 bg-card border border-gray-700 text-text-light focus:ring-primary focus:border-primary rounded-lg focus:outline-none transition duration-150 ease-in-out text-sm appearance-none cursor-pointer">
+                <select id="extension-select" 
+                    class="w-full p-4 bg-card-dark border border-gray-700 text-text-primary focus:ring-accent-orange focus:border-accent-orange rounded-lg focus:outline-none transition duration-150 ease-in-out text-base appearance-none cursor-pointer"
+                    style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%23F3F4F6%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em;"
+                >
                     
-                    <optgroup label="Code & Script Files">
+                    <optgroup label="Code & Script Files" class="text-accent-green">
                         <option value=".py">.py (Python)</option>
                         <option value=".js">.js (JavaScript)</option>
                         <option value=".html">.html (HTML)</option>
                         <option value=".css">.css (CSS)</option>
                         <option value=".jsx">.jsx (React JSX)</option>
+                        <option value=".json">.json</option>
+                        <option value=".xml">.xml</option>
+                        <option value=".yml">.yml (YAML)</option>
                         <option value=".php">.php</option>
                         <option value=".java">.java</option>
                         <option value=".c">.c</option>
                         <option value=".cpp">.cpp</option>
-                        <option value=".cs">.cs</option>
-                        <option value=".swift">.swift</option>
-                        <option value=".go">.go</option>
-                        <option value=".rb">.rb (Ruby)</option>
-                        <option value=".pl">.pl (Perl)</option>
+                        <option value=".sh">.sh (Shell Script)</option>
                         <option value=".sql">.sql</option>
-                        <option value=".json">.json</option>
-                        <option value=".xml">.xml</option>
-                        <option value=".yml">.yml (YAML)</option>
-                        <option value=".yaml">.yaml</option>
                     </optgroup>
                     
-                    <optgroup label="Document Files">
+                    <optgroup label="Document Files" class="text-accent-orange">
                         <option value=".txt">.txt (Plain Text)</option>
                         <option value=".md">.md (Markdown)</option>
-                        <option value=".doc">.doc</option>
                         <option value=".docx">.docx</option>
                         <option value=".pdf">.pdf</option>
-                        <option value=".odt">.odt</option>
-                        <option value=".rtf">.rtf</option>
                         <option value=".tex">.tex (LaTeX)</option>
-                        <option value=".log">.log</option>
                     </optgroup>
 
-                    <optgroup label="Configuration Files">
+                    <optgroup label="Configuration Files" class="text-text-muted">
                         <option value=".conf">.conf</option>
                         <option value=".cfg">.cfg</option>
-                        <option value=".config">.config</option>
                         <option value=".ini">.ini</option>
                         <option value=".env">.env</option>
                     </optgroup>
                     
-                    <optgroup label="Spreadsheet Files">
-                        <option value=".csv">.csv (Comma Separated)</option>
-                        <option value=".xls">.xls</option>
-                        <option value=".xlsx">.xlsx</option>
-                        <option value=".ods">.ods</option>
-                        <option value=".tsv">.tsv</option>
-                    </optgroup>
-                    
-                    <optgroup label="Image Files">
-                        <option value=".png">.png</option>
-                        <option value=".jpg">.jpg</option>
-                        <option value=".jpeg">.jpeg</option>
-                        <option value=".gif">.gif</option>
-                        <option value=".svg">.svg</option>
-                        <option value=".webp">.webp</option>
-                        <option value=".ai">.ai</option>
-                        <option value=".psd">.psd</option>
-                    </optgroup>
-
-                    <optgroup label="Archive & Compressed Files">
-                        <option value=".zip">.zip</option>
-                        <option value=".rar">.rar</option>
-                        <option value=".7z">.7z</option>
-                        <option value=".tar">.tar</option>
-                        <option value=".gz">.gz</option>
-                        <option value=".bz2">.bz2</option>
-                    </optgroup>
-
-                    <optgroup label="Executable & System Files">
-                        <option value=".exe">.exe</option>
-                        <option value=".app">.app</option>
-                        <option value=".bat">.bat</option>
-                        <option value=".sh">.sh (Shell Script)</option>
-                        <option value=".dmg">.dmg</option>
-                        <option value=".dll">.dll</option>
-                    </optgroup>
-                    
                     <!-- Less common categories grouped for brevity -->
-                    <optgroup label="Other Categories">
+                    <optgroup label="Other">
+                        <option value=".csv">.csv (Spreadsheet)</option>
                         <option value=".mp3">.mp3 (Audio)</option>
-                        <option value=".mp4">.mp4 (Video)</option>
-                        <option value=".ttf">.ttf (Font)</option>
+                        <option value=".png">.png (Image)</option>
+                        <option value=".zip">.zip (Archive)</option>
+                        <option value=".exe">.exe (Executable)</option>
                         <option value=".db">.db (Database)</option>
                         <option value=".stl">.stl (3D Model)</option>
-                        <option value=".epub">.epub (E-book)</option>
-                        <option value=".vdi">.vdi (VM)</option>
-                        <option value=".ppt">.ppt (Presentation)</option>
-                        <option value=".key">.key (Presentation)</option>
                     </optgroup>
 
                 </select>
@@ -248,13 +218,13 @@
         <!-- Download Button -->
         <button 
             id="download-button" 
-            class="w-full py-4 px-6 bg-primary hover:bg-primary-dark text-text-light text-lg font-bold rounded-lg shadow-lg transform hover:scale-[1.01] transition duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-primary focus:ring-opacity-50"
+            class="w-full py-4 px-6 bg-accent-green hover:bg-card-dark text-text-primary text-xl font-bold rounded-xl shadow-2xl shadow-accent-green/20 transform hover:scale-[1.01] transition duration-300 ease-in-out border-2 border-accent-green focus:outline-none focus:ring-4 focus:ring-accent-green/50"
         >
             Download File
         </button>
 
         <!-- Message Box (Custom Alert) -->
-        <div id="message-box" class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 text-white font-semibold rounded-lg shadow-xl transition-opacity duration-300">
+        <div id="message-box" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 text-text-primary font-semibold rounded-full shadow-2xl transition-opacity duration-500 opacity-0 z-50">
             <!-- Messages appear here -->
         </div>
 
