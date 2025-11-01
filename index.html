@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal File Generator</title>
+    <title>Universal File Converter</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -42,35 +42,129 @@
             }
         }
 
+        let currentMode = 'text'; // 'text' or 'file'
+        let uploadedFile = null;
+
         // --- Core JavaScript Logic ---
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const textTab = document.getElementById('text-tab');
+            const fileTab = document.getElementById('file-tab');
+            const textContent = document.getElementById('text-content');
+            const fileContent = document.getElementById('file-content');
+            const filenameInput = document.getElementById('filename-input');
+            const contentArea = document.getElementById('content-area');
+            const fileInput = document.getElementById('file-input');
+
+            // Toggle active styles
+            if (mode === 'text') {
+                textTab.classList.add('bg-accent-green', 'text-bg-dark');
+                textTab.classList.remove('bg-card-dark', 'text-text-primary');
+                fileTab.classList.remove('bg-accent-green', 'text-bg-dark');
+                fileTab.classList.add('bg-card-dark', 'text-text-primary');
+
+                textContent.classList.remove('hidden');
+                fileContent.classList.add('hidden');
+                
+                // Set default filename for text mode
+                filenameInput.value = 'untitled';
+
+            } else { // mode === 'file'
+                fileTab.classList.add('bg-accent-green', 'text-bg-dark');
+                fileTab.classList.remove('bg-card-dark', 'text-text-primary');
+                textTab.classList.remove('bg-accent-green', 'text-bg-dark');
+                textTab.classList.add('bg-card-dark', 'text-text-primary');
+
+                fileContent.classList.remove('hidden');
+                textContent.classList.add('hidden');
+
+                // If a file is uploaded, set its name
+                if (uploadedFile) {
+                    setFilenameFromUploadedFile(uploadedFile);
+                } else {
+                    // Reset filename for file mode if no file is present
+                    filenameInput.value = 'uploaded_file';
+                }
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const fileLabel = document.getElementById('file-label-text');
+            const filenameInput = document.getElementById('filename-input');
+
+            if (file) {
+                uploadedFile = file;
+                fileLabel.textContent = `File Ready: ${file.name}`;
+                fileLabel.classList.remove('text-text-muted');
+                fileLabel.classList.add('text-accent-green');
+                setFilenameFromUploadedFile(file);
+                showMessage(`File uploaded: ${file.name}. Select a new extension to download.`, 'success');
+            } else {
+                uploadedFile = null;
+                fileLabel.textContent = 'Click to select a file for re-extension';
+                fileLabel.classList.add('text-text-muted');
+                fileLabel.classList.remove('text-accent-green');
+                filenameInput.value = 'uploaded_file';
+            }
+        }
+
+        function setFilenameFromUploadedFile(file) {
+            const filenameInput = document.getElementById('filename-input');
+            const parts = file.name.split('.');
+            let name = parts[0];
+            
+            // Check if name is complex (e.g., config.v2.ini)
+            if (parts.length > 2) {
+                name = parts.slice(0, -1).join('.');
+            }
+            
+            filenameInput.value = name || 'uploaded_file';
+            
+            // Note: We don't try to set the extension select to the original extension, 
+            // as the user is expected to choose the *new* extension they want.
+        }
 
         // Function to create and trigger the download
         function downloadFile() {
-            const content = document.getElementById('content-area').value;
+            let dataBlob = null;
+            let initialFilename = '';
+            
+            // 1. Determine content source
+            if (currentMode === 'text') {
+                const content = document.getElementById('content-area').value;
+                if (!content) {
+                    showMessage("Please paste the content you wish to save.", 'error');
+                    return;
+                }
+                dataBlob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                initialFilename = 'untitled';
+            } else { // 'file' mode
+                if (!uploadedFile) {
+                    showMessage("Please upload a file first.", 'error');
+                    return;
+                }
+                // Use the uploaded file's Blob directly
+                dataBlob = uploadedFile;
+                initialFilename = uploadedFile.name.split('.').slice(0, -1).join('.') || 'uploaded_file';
+            }
+            
+            // 2. Determine final filename and extension
             let filename = document.getElementById('filename-input').value.trim();
             const extension = document.getElementById('extension-select').value;
             
-            // Validation
-            if (!content) {
-                showMessage("Please paste the content you wish to save.", 'error');
-                return;
-            }
             if (!filename) {
-                filename = 'untitled'; // Default filename
+                filename = initialFilename;
             }
 
-            // Construct the full file name
             const fullFilename = filename + extension;
 
-            // Create a Blob from the content
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-
-            // Create a temporary anchor element
+            // 3. Trigger download
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
+            a.href = URL.createObjectURL(dataBlob);
             a.download = fullFilename;
 
-            // Programmatically click the anchor to trigger the download
             document.body.appendChild(a);
             a.click();
 
@@ -78,7 +172,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(a.href);
 
-            showMessage(`Successfully created and downloaded: ${fullFilename}`, 'success');
+            showMessage(`Successfully downloaded: ${fullFilename}`, 'success');
         }
 
         // Custom message box function (instead of alert)
@@ -95,6 +189,9 @@
                 messageBox.classList.add('bg-accent-green');
             }
 
+            // Set to visible (opacity 1)
+            messageBox.classList.remove('opacity-0');
+
             // Show for 5 seconds
             setTimeout(() => {
                 messageBox.classList.add('opacity-0');
@@ -103,12 +200,15 @@
             }, 4500);
         }
 
-        // Attach event listener after the DOM is loaded
+        // Attach event listeners after the DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            const downloadButton = document.getElementById('download-button');
-            if (downloadButton) {
-                downloadButton.addEventListener('click', downloadFile);
-            }
+            document.getElementById('download-button').addEventListener('click', downloadFile);
+            document.getElementById('text-tab').addEventListener('click', () => switchMode('text'));
+            document.getElementById('file-tab').addEventListener('click', () => switchMode('file'));
+            document.getElementById('file-input').addEventListener('change', handleFileUpload);
+            
+            // Initialize to text mode
+            switchMode('text');
         });
 
     </script>
@@ -118,7 +218,7 @@
     <!-- Dark Green Back Button -->
     <a href="https://hencheng2.github.io/all/" 
        title="Back to Index"
-       class="absolute top-4 left-4 p-3 bg-card-dark hover:bg-gray-700 text-text-primary rounded-full shadow-2xl transition duration-300 ease-in-out z-10 border border-accent-green/30">
+       class="absolute top-4 left-4 p-3 bg-card-dark hover:bg-gray-700 text-accent-green rounded-full shadow-2xl transition duration-300 ease-in-out z-10 border border-accent-green/30">
         <!-- SVG Arrow Icon for a cleaner look -->
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -128,21 +228,53 @@
     <div class="w-full max-w-4xl space-y-6 mt-16 sm:mt-0">
         
         <!-- Header -->
-        <header class="text-center space-y-2 mb-8">
+        <header class="text-center space-y-2 mb-4">
             <h1 class="text-4xl sm:text-5xl font-extrabold text-accent-orange drop-shadow-lg">
-                File Creator
+                File Creator & Re-Extender
             </h1>
-            <p class="text-text-muted text-lg">Paste content, name the file, and download it in your chosen format.</p>
+            <p class="text-text-muted text-lg">Create a new file from text, or upload an existing file to rename its extension.</p>
         </header>
 
-        <!-- Content Input Area -->
+        <!-- Input Mode Toggle -->
+        <div class="flex bg-card-dark p-1 rounded-xl shadow-inner border border-accent-green/30">
+            <button id="text-tab" class="flex-1 py-3 px-4 font-semibold text-sm rounded-lg transition duration-200" onclick="switchMode('text')">
+                1. Paste Text
+            </button>
+            <button id="file-tab" class="flex-1 py-3 px-4 font-semibold text-sm rounded-lg transition duration-200" onclick="switchMode('file')">
+                2. Upload File
+            </button>
+        </div>
+
+        <!-- Content Input Area & File Upload Area -->
         <div class="shadow-2xl rounded-xl overflow-hidden border border-card-dark">
-            <textarea 
-                id="content-area" 
-                rows="15" 
-                placeholder="Paste your code, document text, or configuration here..." 
-                class="w-full p-6 bg-card-dark border-0 text-text-primary focus:ring-accent-green focus:border-accent-green rounded-xl focus:outline-none transition duration-150 ease-in-out text-sm resize-none"
-            ></textarea>
+            
+            <!-- Text Input Mode -->
+            <div id="text-content" class="p-0">
+                 <textarea 
+                    id="content-area" 
+                    rows="15" 
+                    placeholder="Paste your code, document text, or configuration here..." 
+                    class="w-full p-6 bg-card-dark border-0 text-text-primary focus:ring-accent-green focus:border-accent-green rounded-xl focus:outline-none transition duration-150 ease-in-out text-sm resize-none"
+                ></textarea>
+            </div>
+
+            <!-- File Upload Mode -->
+            <div id="file-content" class="p-6 h-[25rem] flex items-center justify-center hidden bg-card-dark">
+                <label id="file-label" for="file-input" class="w-full h-full border-4 border-dashed border-text-muted/50 hover:border-accent-green/70 rounded-xl flex flex-col items-center justify-center p-8 transition duration-300 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-accent-green mb-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 011.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 10a1 1 0 01-1-1V3a1 1 0 012 0v6a1 1 0 01-1 1z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="file-label-text" class="text-lg font-semibold text-text-muted text-center">
+                        Click to select a file for re-extension
+                    </span>
+                    <p class="text-sm text-text-muted mt-2 text-center">
+                        The content of the file will remain the same, only the file name and extension will change.
+                    </p>
+                    <input type="file" id="file-input" class="hidden">
+                </label>
+            </div>
+            
         </div>
 
         <!-- Controls (Filename and Extension) -->
@@ -150,7 +282,7 @@
             
             <!-- Filename Input -->
             <div class="flex-1">
-                <label for="filename-input" class="block text-sm font-medium text-text-muted mb-1">File Name</label>
+                <label for="filename-input" class="block text-sm font-medium text-text-muted mb-1">New File Name</label>
                 <input 
                     type="text" 
                     id="filename-input" 
@@ -162,7 +294,7 @@
 
             <!-- Extension Dropdown -->
             <div class="flex-1">
-                <label for="extension-select" class="block text-sm font-medium text-text-muted mb-1">File Extension</label>
+                <label for="extension-select" class="block text-sm font-medium text-text-muted mb-1">New File Extension</label>
                 <select id="extension-select" 
                     class="w-full p-4 bg-card-dark border border-gray-700 text-text-primary focus:ring-accent-orange focus:border-accent-orange rounded-lg focus:outline-none transition duration-150 ease-in-out text-base appearance-none cursor-pointer"
                     style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%23F3F4F6%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em;"
@@ -173,42 +305,35 @@
                         <option value=".js">.js (JavaScript)</option>
                         <option value=".html">.html (HTML)</option>
                         <option value=".css">.css (CSS)</option>
-                        <option value=".jsx">.jsx (React JSX)</option>
                         <option value=".json">.json</option>
-                        <option value=".xml">.xml</option>
-                        <option value=".yml">.yml (YAML)</option>
-                        <option value=".php">.php</option>
-                        <option value=".java">.java</option>
-                        <option value=".c">.c</option>
-                        <option value=".cpp">.cpp</option>
                         <option value=".sh">.sh (Shell Script)</option>
-                        <option value=".sql">.sql</option>
+                        <option value=".conf">.conf (Config)</option>
+                        <option value=".env">.env (Config)</option>
                     </optgroup>
                     
-                    <optgroup label="Document Files" class="text-accent-orange">
+                    <optgroup label="Document & Text Files" class="text-accent-orange">
                         <option value=".txt">.txt (Plain Text)</option>
                         <option value=".md">.md (Markdown)</option>
-                        <option value=".docx">.docx</option>
-                        <option value=".pdf">.pdf</option>
+                        <option value=".log">.log</option>
+                        <option value=".csv">.csv (Spreadsheet)</option>
                         <option value=".tex">.tex (LaTeX)</option>
                     </optgroup>
 
-                    <optgroup label="Configuration Files" class="text-text-muted">
-                        <option value=".conf">.conf</option>
-                        <option value=".cfg">.cfg</option>
-                        <option value=".ini">.ini</option>
-                        <option value=".env">.env</option>
+                    <optgroup label="Image Files" class="text-text-muted">
+                        <option value=".png">.png</option>
+                        <option value=".jpg">.jpg</option>
+                        <option value=".jpeg">.jpeg</option>
+                        <option value=".gif">.gif</option>
+                        <option value=".svg">.svg</option>
+                        <option value=".webp">.webp</option>
                     </optgroup>
                     
-                    <!-- Less common categories grouped for brevity -->
-                    <optgroup label="Other">
-                        <option value=".csv">.csv (Spreadsheet)</option>
+                    <optgroup label="Archives & Other">
+                        <option value=".zip">.zip</option>
+                        <option value=".tar">.tar</option>
+                        <option value=".pdf">.pdf</option>
+                        <option value=".mp4">.mp4 (Video)</option>
                         <option value=".mp3">.mp3 (Audio)</option>
-                        <option value=".png">.png (Image)</option>
-                        <option value=".zip">.zip (Archive)</option>
-                        <option value=".exe">.exe (Executable)</option>
-                        <option value=".db">.db (Database)</option>
-                        <option value=".stl">.stl (3D Model)</option>
                     </optgroup>
 
                 </select>
