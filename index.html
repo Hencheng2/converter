@@ -59,26 +59,66 @@
                 filename = 'untitled'; // Default filename
             }
 
-            // Construct the full file name
             const fullFilename = filename + extension;
-
-            // Create a Blob from the content
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-
-            // Create a temporary anchor element
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = fullFilename;
 
-            // Programmatically click the anchor to trigger the download
             document.body.appendChild(a);
             a.click();
-
-            // Clean up
             document.body.removeChild(a);
             URL.revokeObjectURL(a.href);
 
             showMessage(`Successfully created and downloaded: ${fullFilename}`, 'success');
+        }
+
+        // Action: Clears the content area
+        function clearContent() {
+            document.getElementById('content-area').value = '';
+            showMessage("Content area cleared.", 'info');
+        }
+
+        // Action: Copies content to clipboard
+        function copyContent() {
+            const contentArea = document.getElementById('content-area');
+            if (!contentArea.value) {
+                showMessage("Nothing to copy.", 'error');
+                return;
+            }
+            // Select content for execCommand method
+            contentArea.select();
+            contentArea.setSelectionRange(0, 99999); // For mobile devices
+
+            // Use document.execCommand('copy') for robustness in iFrame environments
+            try {
+                const success = document.execCommand('copy');
+                if (success) {
+                    showMessage("Content copied to clipboard!", 'success');
+                } else {
+                    throw new Error("Copy command failed.");
+                }
+            } catch (err) {
+                showMessage("Copy failed. Please select and copy manually.", 'error');
+            }
+        }
+
+        // Action: Pastes content from clipboard
+        async function pasteContent() {
+            const contentArea = document.getElementById('content-area');
+            try {
+                // Use modern async clipboard API
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    contentArea.value = text;
+                    showMessage("Content pasted from clipboard.", 'info');
+                } else {
+                    showMessage("Clipboard is empty or permissions denied.", 'error');
+                }
+            } catch (err) {
+                console.error("Paste error:", err);
+                showMessage("Cannot access clipboard. Please paste manually (Ctrl+V or Cmd+V).", 'error');
+            }
         }
 
         // Custom message box function (instead of alert)
@@ -87,15 +127,23 @@
             messageBox.textContent = message;
             
             // Clear previous classes and set new ones
-            messageBox.classList.remove('hidden', 'bg-red-600', 'bg-accent-green', 'opacity-0');
+            messageBox.classList.remove('hidden', 'bg-red-600', 'bg-accent-green', 'bg-sky-600', 'opacity-0');
             
             if (type === 'error') {
                 messageBox.classList.add('bg-red-600');
             } else if (type === 'success') {
                 messageBox.classList.add('bg-accent-green');
+            } else if (type === 'info') {
+                 // Soft blue for info/utility actions
+                messageBox.classList.add('bg-sky-600'); 
             }
 
-            // Show for 5 seconds
+            // Show and fade out
+            setTimeout(() => {
+                messageBox.classList.remove('hidden');
+                messageBox.classList.remove('opacity-0');
+            }, 50);
+
             setTimeout(() => {
                 messageBox.classList.add('opacity-0');
                 // Hide completely after fade out
@@ -105,10 +153,10 @@
 
         // Attach event listener after the DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            const downloadButton = document.getElementById('download-button');
-            if (downloadButton) {
-                downloadButton.addEventListener('click', downloadFile);
-            }
+            document.getElementById('download-button').addEventListener('click', downloadFile);
+            document.getElementById('clear-button').addEventListener('click', clearContent);
+            document.getElementById('copy-button').addEventListener('click', copyContent);
+            document.getElementById('paste-button').addEventListener('click', pasteContent);
         });
 
     </script>
@@ -125,7 +173,7 @@
         </svg>
     </a>
 
-    <div class="w-full max-w-4xl space-y-6 mt-16 sm:mt-0">
+    <div class="w-full max-w-4xl space-y-4 mt-16 sm:mt-0">
         
         <!-- Header -->
         <header class="text-center space-y-2 mb-8">
@@ -134,6 +182,22 @@
             </h1>
             <p class="text-text-muted text-lg">Paste content, name the file, and download it in your chosen format.</p>
         </header>
+
+        <!-- Action Buttons Bar -->
+        <div class="flex justify-end gap-3 mb-2">
+            
+            <button id="clear-button" class="py-2 px-4 text-sm font-semibold rounded-full bg-card-dark text-accent-orange border border-accent-orange/50 hover:bg-accent-orange hover:text-bg-dark transition duration-200 ease-in-out shadow-lg">
+                Clear
+            </button>
+
+            <button id="paste-button" class="py-2 px-4 text-sm font-semibold rounded-full bg-card-dark text-accent-green border border-accent-green/50 hover:bg-accent-green hover:text-bg-dark transition duration-200 ease-in-out shadow-lg">
+                Paste
+            </button>
+
+            <button id="copy-button" class="py-2 px-4 text-sm font-semibold rounded-full bg-card-dark text-text-primary border border-text-primary/50 hover:bg-text-primary hover:text-bg-dark transition duration-200 ease-in-out shadow-lg">
+                Copy
+            </button>
+        </div>
 
         <!-- Content Input Area -->
         <div class="shadow-2xl rounded-xl overflow-hidden border border-card-dark">
@@ -146,7 +210,7 @@
         </div>
 
         <!-- Controls (Filename and Extension) -->
-        <div class="flex flex-col sm:flex-row gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 pt-2">
             
             <!-- Filename Input -->
             <div class="flex-1">
